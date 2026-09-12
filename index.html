@@ -1,0 +1,2553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#070913">
+  <meta id="pageDescription" name="description" content="Timn - Join the gaming community.">
+  <title>Timn | Gaming Community</title>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #070913;
+      --bg-soft: #0d1020;
+      --panel: rgba(18, 22, 42, 0.78);
+      --panel-strong: rgba(25, 31, 56, 0.9);
+      --line: rgba(255, 255, 255, 0.13);
+      --text: #ffffff;
+      --muted: #c7cee5;
+      --accent: #9b7bff;
+      --accent-bright: #6fe8ff;
+      --accent-warm: #ff83c7;
+      --shadow: rgba(0, 0, 0, 0.45);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-width: 0;
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;
+      overflow-x: clip;
+      overscroll-behavior-x: none;
+      background: var(--bg);
+      scroll-behavior: smooth;
+    }
+
+    body {
+      min-height: 100vh;
+      width: 100%;
+      max-width: 100%;
+      margin: 0;
+      overflow-x: hidden;
+      overflow-x: clip;
+      overscroll-behavior-x: none;
+      touch-action: pan-y;
+      position: relative;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 13%, rgba(111, 232, 255, 0.14), transparent 28rem),
+        radial-gradient(circle at 88% 20%, rgba(255, 131, 199, 0.13), transparent 25rem),
+        linear-gradient(135deg, #070913 0%, #101326 48%, #090b16 100%);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .scroll-progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 20;
+      width: 0;
+      height: 3px;
+      pointer-events: none;
+      background: linear-gradient(90deg, var(--accent-warm), var(--accent), var(--accent-bright));
+      box-shadow: 0 0 15px rgba(111, 232, 255, 0.65);
+      transition: width 90ms linear;
+    }
+
+    [dir="rtl"] .scroll-progress {
+      right: 0;
+      left: auto;
+      background: linear-gradient(270deg, var(--accent-warm), var(--accent), var(--accent-bright));
+    }
+
+    body::before {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      content: "";
+      opacity: 0.2;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+      background-size: 52px 52px;
+      mask-image: linear-gradient(to bottom, black, transparent 75%);
+    }
+
+    a {
+      color: inherit;
+    }
+
+    .orb {
+      position: fixed;
+      z-index: -1;
+      width: 22rem;
+      height: 22rem;
+      border-radius: 50%;
+      opacity: 0.16;
+      filter: blur(70px);
+      pointer-events: none;
+      animation: drift 16s ease-in-out infinite alternate;
+    }
+
+    .orb-one {
+      top: 12%;
+      left: -12rem;
+      background: var(--accent-bright);
+    }
+
+    .orb-two {
+      right: -11rem;
+      bottom: 4%;
+      background: var(--accent-warm);
+      animation-delay: -6s;
+    }
+
+    .page-shell {
+      width: min(1120px, calc(100% - 40px));
+      max-width: 100%;
+      margin: 0 auto;
+    }
+
+    .topbar {
+      display: flex;
+      min-width: 0;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 28px 0;
+      animation: rise 700ms ease both;
+      direction: ltr;
+    }
+
+    .brand-mark {
+      display: inline-flex;
+      align-items: center;
+      gap: 11px;
+      font-size: 0.85rem;
+      font-weight: 800;
+      letter-spacing: 0.2em;
+    }
+
+    .designer-credit {
+      margin: 0 auto 0 24px;
+      color: #e8ebf7;
+      font-size: 0.77rem;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+    }
+
+    .designer-credit span {
+      color: var(--accent-bright);
+    }
+
+    .topbar-tools {
+      display: inline-flex;
+      min-width: 0;
+      max-width: 100%;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .nav-link {
+      display: inline-flex;
+      min-height: 39px;
+      align-items: center;
+      padding: 0 11px;
+      border: 1px solid transparent;
+      border-radius: 11px;
+      color: #cfd6eb;
+      font-size: 0.77rem;
+      font-weight: 800;
+      text-decoration: none;
+      transition: color 180ms ease, border-color 180ms ease, background 180ms ease, transform 180ms ease;
+    }
+
+    .nav-link:hover {
+      border-color: var(--line);
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.07);
+      transform: translateY(-2px);
+    }
+
+    .nav-link:focus-visible {
+      outline: 3px solid var(--accent-bright);
+      outline-offset: 4px;
+    }
+
+    .translate-button {
+      display: inline-flex;
+      min-height: 39px;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 0 13px;
+      border: 1px solid rgba(111, 232, 255, 0.34);
+      border-radius: 11px;
+      color: #ffffff;
+      background: rgba(111, 232, 255, 0.1);
+      font-size: 0.77rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+    }
+
+    .translate-button::before {
+      display: inline-grid;
+      width: 20px;
+      height: 20px;
+      place-items: center;
+      border: 1px solid currentColor;
+      border-radius: 50%;
+      content: "A";
+      font-size: 0.68rem;
+      line-height: 1;
+    }
+
+    .translate-button:hover {
+      border-color: var(--accent-bright);
+      background: rgba(111, 232, 255, 0.19);
+      box-shadow: 0 8px 22px rgba(111, 232, 255, 0.12);
+      transform: translateY(-2px);
+    }
+
+    .translate-button:focus-visible {
+      outline: 3px solid var(--accent-bright);
+      outline-offset: 4px;
+    }
+
+    .ai-launch-button {
+      display: inline-flex;
+      min-height: 39px;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 0 13px;
+      border: 1px solid rgba(255, 131, 199, 0.43);
+      border-radius: 11px;
+      color: #ffffff;
+      background: linear-gradient(120deg, rgba(255, 131, 199, 0.2), rgba(155, 123, 255, 0.16));
+      font-size: 0.77rem;
+      font-weight: 850;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(255, 131, 199, 0.1);
+      transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+    }
+
+    .ai-launch-button::before {
+      display: inline-grid;
+      width: 20px;
+      height: 20px;
+      place-items: center;
+      border: 1px solid currentColor;
+      border-radius: 7px;
+      content: "AI";
+      font-size: 0.54rem;
+      line-height: 1;
+    }
+
+    .ai-launch-button:hover {
+      border-color: rgba(255, 255, 255, 0.62);
+      background: linear-gradient(120deg, rgba(255, 131, 199, 0.3), rgba(155, 123, 255, 0.24));
+      box-shadow: 0 12px 28px rgba(255, 131, 199, 0.18);
+      transform: translateY(-2px);
+    }
+
+    .ai-launch-button:focus-visible {
+      outline: 3px solid var(--accent-bright);
+      outline-offset: 4px;
+    }
+
+    .brand-dot {
+      width: 12px;
+      height: 12px;
+      border: 2px solid var(--accent-bright);
+      border-radius: 50%;
+      box-shadow: 0 0 18px rgba(111, 232, 255, 0.8);
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      padding: 9px 13px;
+      border: 1px solid var(--line);
+      border-radius: 99px;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.045);
+      font-size: 0.76rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+
+    .status-pulse {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #6dffb3;
+      box-shadow: 0 0 0 5px rgba(109, 255, 179, 0.11), 0 0 13px rgba(109, 255, 179, 0.8);
+    }
+
+    .hero {
+      display: grid;
+      min-width: 0;
+      min-height: calc(100svh - 98px);
+      align-items: center;
+      grid-template-columns: minmax(0, 1fr) minmax(280px, 0.75fr);
+      gap: clamp(32px, 6vw, 80px);
+      padding: 24px 0 44px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 24px;
+      color: var(--accent-bright);
+      font-size: 0.76rem;
+      font-weight: 800;
+      letter-spacing: 0.17em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      display: block;
+      width: 31px;
+      height: 1px;
+      content: "";
+      background: var(--accent-bright);
+      box-shadow: 0 0 10px rgba(111, 232, 255, 0.75);
+    }
+
+    h1 {
+      max-width: 720px;
+      margin: 0;
+      overflow-wrap: anywhere;
+      font-size: clamp(4.8rem, 13vw, 10rem);
+      font-weight: 900;
+      letter-spacing: -0.1em;
+      line-height: 0.78;
+      background: linear-gradient(112deg, #ffffff 8%, #d8d4ff 43%, #7deaff 78%, #ffffff 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      filter: drop-shadow(0 20px 38px rgba(111, 232, 255, 0.11));
+      animation: reveal 900ms 100ms ease both;
+    }
+
+    .hero-copy {
+      min-width: 0;
+      max-width: 560px;
+      margin: 24px 0 0;
+      color: var(--muted);
+      font-size: clamp(1.08rem, 2vw, 1.28rem);
+      line-height: 1.7;
+      animation: rise 800ms 250ms ease both;
+    }
+
+    .hero-copy strong {
+      color: var(--text);
+      font-weight: 800;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 13px;
+      margin-top: 24px;
+      animation: rise 800ms 380ms ease both;
+    }
+
+    .scroll-link {
+      border-color: rgba(255, 255, 255, 0.16);
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .scroll-link:hover {
+      border-color: rgba(255, 255, 255, 0.35);
+      background: rgba(255, 255, 255, 0.11);
+    }
+
+    .button {
+      display: inline-flex;
+      min-height: 53px;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 0 20px;
+      border: 1px solid transparent;
+      border-radius: 14px;
+      font-size: 0.96rem;
+      font-weight: 800;
+      line-height: 1;
+      text-decoration: none;
+      cursor: pointer;
+      max-width: 100%;
+      transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background 180ms ease;
+    }
+
+    .button:hover {
+      transform: translateY(-3px);
+    }
+
+    .button:focus-visible {
+      outline: 3px solid var(--accent-bright);
+      outline-offset: 4px;
+    }
+
+    .button-primary {
+      color: #090b16;
+      background: linear-gradient(110deg, #a790ff, #70e8ff);
+      box-shadow: 0 12px 30px rgba(111, 232, 255, 0.16);
+    }
+
+    .button-primary:hover {
+      box-shadow: 0 17px 38px rgba(111, 232, 255, 0.27);
+    }
+
+    .button-secondary {
+      border-color: var(--line);
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.07);
+    }
+
+    .button-secondary:hover {
+      border-color: rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .message-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 11px;
+      margin-top: 26px;
+    }
+
+    .feature-actions {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .feature-button {
+      display: flex;
+      min-width: 0;
+      min-height: 78px;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 11px;
+      padding: 13px;
+      border: 1px solid rgba(255, 255, 255, 0.13);
+      border-radius: 15px;
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.055);
+      text-align: left;
+      cursor: pointer;
+      transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+    }
+
+    .feature-button svg {
+      width: 18px;
+      height: 18px;
+      fill: none;
+      stroke: var(--accent-bright);
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 1.6;
+    }
+
+    .feature-button:nth-child(2) svg {
+      stroke: var(--accent-warm);
+    }
+
+    .feature-button:nth-child(3) svg {
+      stroke: #d1a5ff;
+    }
+
+    .feature-button span {
+      overflow-wrap: anywhere;
+      font-size: 0.76rem;
+      font-weight: 800;
+      line-height: 1.25;
+    }
+
+    .feature-button:hover {
+      border-color: rgba(111, 232, 255, 0.42);
+      background: rgba(111, 232, 255, 0.1);
+      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.2);
+      transform: translateY(-4px);
+    }
+
+    .feature-button:focus-visible {
+      outline: 3px solid var(--accent-bright);
+      outline-offset: 4px;
+    }
+
+    .message-button {
+      position: relative;
+      display: inline-flex;
+      min-height: 46px;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      padding: 0 15px;
+      max-width: 100%;
+      overflow: hidden;
+      border: 1px solid rgba(155, 123, 255, 0.45);
+      border-radius: 12px;
+      color: #ffffff;
+      background: linear-gradient(120deg, rgba(155, 123, 255, 0.2), rgba(111, 232, 255, 0.09));
+      font-size: 0.79rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+    }
+
+    .message-button::before {
+      width: 7px;
+      height: 7px;
+      border: 1px solid var(--accent-bright);
+      border-radius: 50%;
+      content: "";
+      box-shadow: 0 0 9px rgba(111, 232, 255, 0.8);
+    }
+
+    .message-button:last-child {
+      border-color: rgba(255, 131, 199, 0.45);
+      background: linear-gradient(120deg, rgba(255, 131, 199, 0.18), rgba(155, 123, 255, 0.1));
+    }
+
+    .message-button:last-child::before {
+      border-color: var(--accent-warm);
+      box-shadow: 0 0 9px rgba(255, 131, 199, 0.8);
+    }
+
+    .message-button:hover {
+      border-color: rgba(255, 255, 255, 0.58);
+      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.22);
+      transform: translateY(-3px);
+    }
+
+    .message-button:focus-visible,
+    .message-close:focus-visible {
+      outline: 3px solid var(--accent-bright);
+      outline-offset: 4px;
+    }
+
+    .message-panel {
+      position: relative;
+      display: none;
+      margin-top: 19px;
+      padding: 17px 44px 17px 18px;
+      border: 1px solid rgba(111, 232, 255, 0.3);
+      border-radius: 14px;
+      color: #f7f8ff;
+      background: linear-gradient(135deg, rgba(111, 232, 255, 0.1), rgba(155, 123, 255, 0.12));
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.18);
+      font-size: 0.88rem;
+      line-height: 1.7;
+    }
+
+    .message-panel.is-visible {
+      display: block;
+      animation: rise 300ms ease both;
+    }
+
+    html.chat-open,
+    body.chat-open {
+      overflow: hidden;
+      overscroll-behavior: none;
+      height: 100%;
+    }
+
+    body.chat-open {
+      background: #080b18;
+    }
+
+    body.chat-open .page-shell,
+    body.chat-open > .orb,
+    body.chat-open > .scroll-progress {
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .ai-chat {
+      position: fixed;
+      inset: var(--ai-viewport-offset-top, 0px) 0 auto;
+      z-index: 50;
+      display: flex;
+      width: 100%;
+      height: var(--ai-viewport-height, 100dvh);
+      max-height: none;
+      flex-direction: column;
+      overflow: hidden;
+      border: 0;
+      border-radius: 0;
+      background:
+        radial-gradient(circle at 14% 12%, rgba(111, 232, 255, 0.12), transparent 34%),
+        radial-gradient(circle at 87% 75%, rgba(255, 131, 199, 0.1), transparent 32%),
+        linear-gradient(145deg, #1b203e 0%, #0b0f22 54%, #080b18 100%);
+      box-shadow: none;
+      backdrop-filter: blur(22px);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(12px);
+      transition: opacity 220ms ease, transform 220ms ease, visibility 220ms ease;
+      visibility: hidden;
+    }
+
+    .ai-chat.is-open {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+      visibility: visible;
+    }
+
+    .ai-chat-header {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      width: min(100%, 1120px);
+      margin: 0 auto;
+      padding: max(20px, env(safe-area-inset-top)) 24px 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      background: linear-gradient(100deg, rgba(155, 123, 255, 0.16), rgba(111, 232, 255, 0.08));
+    }
+
+    .ai-chat-title {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      direction: ltr;
+      color: #ffffff;
+      font-size: 0.98rem;
+      font-weight: 850;
+    }
+
+    .ai-title-copy {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .ai-counter {
+      color: #b7c1dc;
+      direction: rtl;
+      font-size: 0.67rem;
+      font-weight: 650;
+      line-height: 1.2;
+    }
+
+    .ai-online-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #6dffb3;
+      box-shadow: 0 0 0 5px rgba(109, 255, 179, 0.1), 0 0 14px rgba(109, 255, 179, 0.75);
+    }
+
+    .ai-back {
+      display: grid;
+      min-height: 40px;
+      padding: 0 14px;
+      place-items: center;
+      border: 1px solid rgba(255, 255, 255, 0.17);
+      border-radius: 12px;
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.06);
+      font-family: inherit;
+      font-size: 0.74rem;
+      font-weight: 850;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      transition: background 180ms ease, border-color 180ms ease, transform 180ms ease;
+    }
+
+    .ai-back:hover {
+      border-color: rgba(111, 232, 255, 0.58);
+      background: rgba(255, 255, 255, 0.14);
+      transform: translateX(-3px);
+    }
+
+    .ai-back:focus-visible,
+    .ai-send:focus-visible {
+      outline: 3px solid var(--accent-bright);
+      outline-offset: 3px;
+    }
+
+    .ai-chat-body {
+      display: flex;
+      width: min(100%, 880px);
+      min-height: 0;
+      flex: 1;
+      flex-direction: column;
+      gap: 13px;
+      margin: 0 auto;
+      padding: 28px 24px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-gutter: stable;
+    }
+
+    .ai-welcome {
+      padding: 15px 16px;
+      border: 1px solid rgba(111, 232, 255, 0.16);
+      border-radius: 16px 16px 16px 4px;
+      color: #d8def1;
+      background: rgba(111, 232, 255, 0.07);
+      font-size: 0.85rem;
+      line-height: 1.65;
+    }
+
+    .ai-quick-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .ai-quick-actions[hidden] {
+      display: none;
+    }
+
+    .ai-quick-button {
+      min-height: 32px;
+      padding: 0 10px;
+      border: 1px solid rgba(155, 123, 255, 0.32);
+      border-radius: 99px;
+      color: #e7e9ff;
+      background: rgba(155, 123, 255, 0.1);
+      font-family: inherit;
+      font-size: 0.71rem;
+      font-weight: 750;
+      cursor: pointer;
+      transition: background 180ms ease, border-color 180ms ease, transform 180ms ease;
+    }
+
+    .ai-quick-button:hover {
+      border-color: rgba(111, 232, 255, 0.6);
+      background: rgba(111, 232, 255, 0.13);
+      transform: translateY(-2px);
+    }
+
+    .ai-quick-button:focus-visible {
+      outline: 3px solid var(--accent-bright);
+      outline-offset: 3px;
+    }
+
+    .ai-admin-panel {
+      padding: 13px 14px;
+      border: 1px solid rgba(255, 131, 199, 0.3);
+      border-radius: 15px;
+      color: #ffeaf6;
+      background: rgba(255, 131, 199, 0.09);
+      direction: rtl;
+      font-size: 0.8rem;
+      line-height: 1.7;
+      white-space: pre-line;
+      overflow-wrap: anywhere;
+    }
+
+    .ai-user-message,
+    .ai-bot-message {
+      max-width: min(760px, 88%);
+      animation: rise 260ms ease both;
+    }
+
+    .ai-user-message {
+      align-self: flex-start;
+      padding: 11px 14px;
+      border: 1px solid rgba(255, 131, 199, 0.2);
+      border-radius: 16px 16px 4px 16px;
+      color: #fff4fb;
+      background: rgba(255, 131, 199, 0.13);
+      font-size: 0.84rem;
+      line-height: 1.6;
+      overflow-wrap: anywhere;
+    }
+
+    .ai-bot-message {
+      align-self: flex-end;
+      direction: rtl;
+      text-align: right;
+    }
+
+    .ai-bot-name {
+      display: block;
+      margin: 0 4px 6px 0;
+      color: var(--accent-bright);
+      direction: ltr;
+      font-size: 0.72rem;
+      font-weight: 850;
+      letter-spacing: 0.05em;
+      text-align: right;
+    }
+
+    .ai-bot-reply {
+      padding: 12px 14px;
+      border: 1px solid rgba(111, 232, 255, 0.2);
+      border-radius: 16px 16px 16px 4px;
+      color: #f8f9ff;
+      background: rgba(111, 232, 255, 0.09);
+      font-size: 0.84rem;
+      line-height: 1.75;
+      white-space: pre-line;
+      overflow-wrap: anywhere;
+    }
+
+    .ai-searching {
+      display: flex;
+      align-items: center;
+      align-self: flex-end;
+      gap: 10px;
+      direction: rtl;
+      color: #dce3f7;
+      font-size: 0.8rem;
+    }
+
+    .ai-searching[hidden] {
+      display: none;
+    }
+
+    .ai-spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      border-top-color: var(--accent-bright);
+      border-radius: 50%;
+      animation: spin 750ms linear infinite;
+    }
+
+    .ai-input-area {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: flex-end;
+      gap: 9px;
+      width: min(100%, 880px);
+      margin: 0 auto;
+      padding: 16px 24px max(16px, env(safe-area-inset-bottom));
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(5, 7, 16, 0.34);
+    }
+
+    .ai-input {
+      display: block;
+      min-height: 43px;
+      max-height: 110px;
+      flex: 1;
+      resize: none;
+      padding: 12px 13px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 13px;
+      outline: none;
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.07);
+      font: inherit;
+      font-size: 0.84rem;
+      line-height: 1.45;
+      transition: border-color 180ms ease, background 180ms ease;
+    }
+
+    .ai-input::placeholder {
+      color: #aeb7d2;
+    }
+
+    .ai-input:focus {
+      border-color: rgba(111, 232, 255, 0.65);
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .ai-send {
+      display: inline-flex;
+      min-height: 43px;
+      align-items: center;
+      justify-content: center;
+      padding: 0 14px;
+      border: 0;
+      border-radius: 13px;
+      color: #090b16;
+      background: linear-gradient(115deg, #a790ff, #70e8ff);
+      font-size: 0.8rem;
+      font-weight: 850;
+      cursor: pointer;
+      transition: transform 180ms ease, box-shadow 180ms ease, opacity 180ms ease;
+    }
+
+    .ai-send:hover:not(:disabled) {
+      box-shadow: 0 9px 24px rgba(111, 232, 255, 0.25);
+      transform: translateY(-2px);
+    }
+
+    .ai-send:disabled,
+    .ai-input:disabled {
+      cursor: wait;
+      opacity: 0.58;
+    }
+
+    .message-close {
+      position: absolute;
+      top: 9px;
+      right: 10px;
+      display: grid;
+      width: 27px;
+      height: 27px;
+      place-items: center;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.07);
+      font-size: 1rem;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .invite-note {
+      display: inline-block;
+      margin-top: 18px;
+      color: #aeb7d2;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 0.76rem;
+      letter-spacing: 0.02em;
+      overflow-wrap: anywhere;
+    }
+
+    .invite-note:hover,
+    .footer-invite:hover,
+    .ai-bot-reply a:hover {
+      color: #ffffff;
+    }
+
+    .footer-invite,
+    .ai-bot-reply a {
+      color: var(--accent-bright);
+      text-decoration: underline;
+      text-decoration-color: rgba(111, 232, 255, 0.45);
+      text-underline-offset: 4px;
+      transition: color 180ms ease, text-decoration-color 180ms ease;
+    }
+
+    .footer-invite {
+      overflow-wrap: anywhere;
+    }
+
+    .hero-visual {
+      position: relative;
+      display: grid;
+      min-width: 0;
+      min-height: 330px;
+      place-items: center;
+      animation: rise 900ms 300ms ease both;
+    }
+
+    .halo {
+      position: absolute;
+      width: min(100%, 410px);
+      aspect-ratio: 1;
+      border: 1px solid rgba(151, 125, 255, 0.32);
+      border-radius: 50%;
+      box-shadow:
+        0 0 0 22px rgba(151, 125, 255, 0.04),
+        0 0 0 56px rgba(111, 232, 255, 0.035),
+        inset 0 0 50px rgba(111, 232, 255, 0.08);
+      animation: spin 24s linear infinite;
+    }
+
+    .halo::before,
+    .halo::after {
+      position: absolute;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      content: "";
+      background: var(--accent-bright);
+      box-shadow: 0 0 18px 5px rgba(111, 232, 255, 0.5);
+    }
+
+    .halo::before {
+      top: 13%;
+      left: 16%;
+    }
+
+    .halo::after {
+      right: 8%;
+      bottom: 20%;
+      background: var(--accent-warm);
+      box-shadow: 0 0 18px 5px rgba(255, 131, 199, 0.5);
+    }
+
+    .glass-card {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      width: min(100%, 310px);
+      min-height: 310px;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+      border: 1px solid rgba(255, 255, 255, 0.17);
+      border-radius: 30px;
+      text-align: center;
+      background: linear-gradient(145deg, rgba(35, 40, 75, 0.79), rgba(9, 12, 25, 0.8));
+      box-shadow: 0 30px 75px var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.09);
+      backdrop-filter: blur(18px);
+      transform: rotate(3deg);
+      transition: transform 400ms ease;
+    }
+
+    .glass-card:hover {
+      transform: rotate(0deg) translateY(-5px);
+    }
+
+    .card-signal {
+      display: flex;
+      width: 57px;
+      height: 57px;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 22px;
+      border: 1px solid rgba(111, 232, 255, 0.35);
+      border-radius: 18px;
+      color: var(--accent-bright);
+      background: rgba(111, 232, 255, 0.1);
+      box-shadow: 0 0 25px rgba(111, 232, 255, 0.1);
+    }
+
+    .card-signal svg {
+      width: 28px;
+      height: 28px;
+      fill: none;
+      stroke: currentColor;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 1.7;
+    }
+
+    .glass-card h2 {
+      margin: 0;
+      font-size: 1.5rem;
+      letter-spacing: -0.03em;
+    }
+
+    .glass-card p {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 0.94rem;
+      line-height: 1.55;
+    }
+
+    .info-strip {
+      display: grid;
+      min-width: 0;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.045);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.16);
+      animation: rise 900ms 500ms ease both;
+    }
+
+    .reveal {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    body.has-motion .reveal {
+      opacity: 0;
+      transform: translateY(22px);
+      transition: opacity 700ms ease, transform 700ms ease;
+    }
+
+    body.has-motion .reveal.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .management {
+      display: grid;
+      min-width: 0;
+      align-items: center;
+      grid-template-columns: minmax(250px, 0.72fr) minmax(0, 1.28fr);
+      gap: clamp(42px, 8vw, 100px);
+      padding: 108px 0 92px;
+    }
+
+    .management-copy {
+      min-width: 0;
+      max-width: 410px;
+    }
+
+    .section-kicker {
+      margin: 0 0 17px;
+      color: var(--accent-warm);
+      font-size: 0.76rem;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .management h2 {
+      margin: 0;
+      color: var(--text);
+      font-size: clamp(2.3rem, 5vw, 4.3rem);
+      font-weight: 850;
+      letter-spacing: -0.065em;
+      line-height: 0.98;
+    }
+
+    .management-intro {
+      overflow-wrap: anywhere;
+      margin: 24px 0 0;
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.75;
+    }
+
+    .management-quote {
+      overflow-wrap: anywhere;
+      margin: 27px 0 0;
+      padding: 17px 0 17px 18px;
+      border-left: 2px solid var(--accent-bright);
+      color: #f5f7ff;
+      font-size: 0.94rem;
+      font-weight: 700;
+      line-height: 1.7;
+    }
+
+    .cascade-grid {
+      position: relative;
+      display: grid;
+      min-width: 0;
+      min-height: 440px;
+      grid-template-columns: repeat(12, 1fr);
+      grid-template-rows: repeat(10, 1fr);
+      gap: 10px;
+    }
+
+    .cascade-grid::before {
+      position: absolute;
+      inset: 9% 8%;
+      border: 1px solid rgba(111, 232, 255, 0.16);
+      border-radius: 28px;
+      content: "";
+      transform: rotate(-5deg);
+    }
+
+    .layer-card {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      min-width: 0;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 20px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.17);
+      border-radius: 20px;
+      background: linear-gradient(145deg, rgba(38, 44, 79, 0.88), rgba(13, 16, 34, 0.88));
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(15px);
+      transition: transform 240ms ease, border-color 240ms ease;
+    }
+
+    .layer-card::after {
+      position: absolute;
+      top: -40px;
+      right: -35px;
+      width: 100px;
+      height: 100px;
+      border: 1px solid rgba(111, 232, 255, 0.25);
+      border-radius: 50%;
+      content: "";
+    }
+
+    .layer-card:hover {
+      z-index: 2;
+      border-color: rgba(111, 232, 255, 0.46);
+      transform: translateY(-6px) rotate(0deg) !important;
+    }
+
+    .layer-card:nth-child(1) {
+      grid-column: 1 / 7;
+      grid-row: 2 / 7;
+      transform: rotate(-4deg);
+    }
+
+    .layer-card:nth-child(2) {
+      grid-column: 6 / 12;
+      grid-row: 1 / 6;
+      background: linear-gradient(145deg, rgba(55, 47, 91, 0.9), rgba(21, 16, 43, 0.9));
+      transform: rotate(4deg);
+    }
+
+    .layer-card:nth-child(3) {
+      grid-column: 5 / 11;
+      grid-row: 5 / 10;
+      background: linear-gradient(145deg, rgba(31, 65, 83, 0.9), rgba(11, 27, 40, 0.9));
+      transform: rotate(-2deg);
+    }
+
+    .layer-card:nth-child(4) {
+      grid-column: 1 / 6;
+      grid-row: 7 / 11;
+      background: linear-gradient(145deg, rgba(67, 38, 70, 0.9), rgba(29, 15, 38, 0.9));
+      transform: rotate(3deg);
+    }
+
+    .layer-number {
+      color: var(--accent-bright);
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+    }
+
+    .layer-card:nth-child(2) .layer-number {
+      color: var(--accent-warm);
+    }
+
+    .layer-card:nth-child(4) .layer-number {
+      color: #d1a5ff;
+    }
+
+    .layer-card h3 {
+      max-width: 155px;
+      margin: 18px 0 0;
+      overflow-wrap: anywhere;
+      color: var(--text);
+      font-size: 1.05rem;
+      line-height: 1.14;
+    }
+
+    .layer-card p {
+      max-width: 185px;
+      margin: 12px 0 0;
+      overflow-wrap: anywhere;
+      color: #cad1e6;
+      font-size: 0.79rem;
+      line-height: 1.55;
+    }
+
+    .info-item {
+      padding: 13px 16px;
+      border-right: 1px solid var(--line);
+    }
+
+    .info-item:last-child {
+      border-right: 0;
+    }
+
+    .info-label {
+      display: block;
+      margin-bottom: 6px;
+      color: #9ca7c7;
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+    }
+
+    .info-value {
+      color: var(--text);
+      font-size: 0.94rem;
+      font-weight: 750;
+      overflow-wrap: anywhere;
+    }
+
+    footer {
+      display: flex;
+      min-width: 0;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 30px 0 38px;
+      color: #aeb7d2;
+      font-size: 0.78rem;
+    }
+
+    .footer-brand {
+      color: var(--text);
+      font-weight: 800;
+      letter-spacing: 0.14em;
+    }
+
+    @keyframes rise {
+      from {
+        opacity: 0;
+        transform: translateY(18px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes reveal {
+      from {
+        opacity: 0;
+        letter-spacing: -0.18em;
+        transform: scale(0.96);
+      }
+      to {
+        opacity: 1;
+        letter-spacing: -0.1em;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes spin {
+      from {
+        transform: rotate(0deg);
+      }
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes drift {
+      from {
+        transform: translate3d(0, 0, 0) scale(1);
+      }
+      to {
+        transform: translate3d(55px, -28px, 0) scale(1.15);
+      }
+    }
+
+    @media (max-width: 760px) {
+      .page-shell {
+        width: min(100% - 28px, 560px);
+      }
+
+      .topbar {
+        flex-wrap: wrap;
+        padding: 20px 0;
+      }
+
+      .topbar-tools {
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+
+      .designer-credit {
+        order: 3;
+        width: 100%;
+        margin: -4px 0 0 23px;
+      }
+
+      .hero {
+        min-height: auto;
+        grid-template-columns: 1fr;
+        gap: 54px;
+        padding: 72px 0 56px;
+      }
+
+      h1 {
+        font-size: clamp(5rem, 25vw, 8.6rem);
+      }
+
+      .hero-copy {
+        margin-top: 26px;
+        font-size: 1.05rem;
+      }
+
+      .hero-visual {
+        min-height: 340px;
+      }
+
+      .management {
+        grid-template-columns: 1fr;
+        gap: 38px;
+        padding: 84px 0 70px;
+      }
+
+      .management-copy {
+        max-width: 560px;
+      }
+
+      .feature-button {
+        min-height: 73px;
+      }
+
+      .cascade-grid {
+        min-height: 420px;
+      }
+
+      .info-strip {
+        grid-template-columns: 1fr;
+      }
+
+      .info-item {
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .info-item:last-child {
+        border-bottom: 0;
+      }
+
+      .ai-chat-header {
+        padding-right: 16px;
+        padding-left: 16px;
+      }
+
+      .ai-chat-body {
+        padding: 20px 16px;
+      }
+
+      .ai-input-area {
+        padding-right: 16px;
+        padding-left: 16px;
+      }
+
+      .ai-user-message,
+      .ai-bot-message {
+        max-width: 94%;
+      }
+
+      footer {
+        flex-direction: column;
+        align-items: flex-start;
+        padding-bottom: 27px;
+      }
+    }
+
+    @media (min-width: 761px) and (max-height: 820px) {
+      .topbar {
+        padding: 17px 0;
+      }
+
+      .hero {
+        min-height: calc(100svh - 74px);
+        padding: 12px 0 26px;
+      }
+
+      h1 {
+        font-size: clamp(4.4rem, 11vw, 8rem);
+      }
+
+      .hero-copy {
+        margin-top: 18px;
+        font-size: 1rem;
+      }
+
+      .actions {
+        margin-top: 20px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
+  <div class="orb orb-one" aria-hidden="true"></div>
+  <div class="orb orb-two" aria-hidden="true"></div>
+
+  <div class="page-shell">
+    <header class="topbar">
+      <div class="brand-mark" aria-label="Timn">
+        <span class="brand-dot" aria-hidden="true"></span>
+        Timn
+      </div>
+      <p class="designer-credit"><span data-i18n="designerPrefix">Made by </span><span>ABOSAUD</span></p>
+      <div class="topbar-tools">
+        <a class="nav-link" href="#management" data-i18n="explore">Explore</a>
+        <div class="status-pill">
+          <span class="status-pulse" aria-hidden="true"></span>
+          <span data-i18n="status">COMMUNITY ONLINE</span>
+        </div>
+        <button class="translate-button" id="translateButton" type="button" aria-label="Translate website">
+          Translate
+        </button>
+        <button class="ai-launch-button" id="aiLaunchButton" type="button" aria-label="Open Timn AI assistant">
+          Timn AI
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="page-title">
+        <div class="hero-content">
+          <p class="eyebrow" data-i18n="eyebrow">Welcome to the space</p>
+          <h1 id="page-title">Timn</h1>
+          <p class="hero-copy">
+            <span data-i18n="heroCopyStart">A place for </span><strong data-i18n="heroCopyStrong">good energy, real conversations,</strong><span data-i18n="heroCopyEnd"> and people who make the internet feel a little more interesting.</span>
+          </p>
+          <div class="actions">
+            <a class="button button-primary" href="https://discord.gg/Ejh2j6AvP" target="_blank" rel="noopener noreferrer">
+              <span data-i18n="joinServer">Join the server</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 12h13M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+            <a class="button scroll-link" href="#management">
+              <span data-i18n="exploreSpace">Explore the space</span>
+              <svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 5v13m0 0 5-5m-5 5-5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+          </div>
+          <a class="invite-note" href="https://discord.gg/Ejh2j6AvP" target="_blank" rel="noopener noreferrer">discord.gg/Ejh2j6AvP</a>
+        </div>
+
+        <div class="hero-visual" aria-hidden="true">
+          <div class="halo"></div>
+          <div class="glass-card">
+            <div class="card-signal">
+              <svg viewBox="0 0 24 24">
+                <path d="M7.5 8.5h9M7.5 12h6M7.5 15.5h3"/>
+                <path d="M5.5 4.5h13a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-6l-3.5 3v-3h-3.5a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2Z"/>
+              </svg>
+            </div>
+            <h2 data-i18n="cardTitle">Find your signal.</h2>
+            <p data-i18n="cardCopy">Pull up a chair, meet the community, and make yourself at home.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="management reveal" id="management" aria-labelledby="management-title">
+        <div class="management-copy">
+          <p class="section-kicker" data-i18n="managementKicker">About the management</p>
+          <h2 id="management-title" data-i18n="managementTitle">A space with purpose.</h2>
+          <p class="management-intro" data-i18n="managementIntro">
+            Behind Timn is a team that believes a good gaming community should feel welcoming,
+            thoughtful, and easy to return to. Every detail is shaped to keep the atmosphere
+            balanced and the people inside it respected.
+          </p>
+          <p class="management-quote" data-i18n="managementQuote">
+            (We strive to serve and protect you and create a wonderful and harmonious environment)
+          </p>
+          <div class="message-actions" id="messageActions" aria-label="Learn more about Timn">
+            <button class="message-button" type="button" data-i18n="aboutServer" data-message-en="(Timn is a gaming community for players who enjoy Roblox, Minecraft, Fortnite, survival games, and more.)" data-message-ar="(Timn هو مجتمع ألعاب للاعبين الذين يستمتعون بروبلكس وماينكرافت وفورتنايت وألعاب البقاء وغيرها.)">
+              About the server
+            </button>
+            <button class="message-button" type="button" data-i18n="aboutCreator" data-message-en="(Hello, I'm ABOSAUD, the person who created this site. I worked hard to make Timn welcoming, useful, and safe for every player. Thank you for being part of the community.)" data-message-ar="(مرحباً، أنا ABOSAUD، الشخص الذي أنشأ هذا الموقع. عملت بجد لجعل Timn مجتمعاً مرحباً ومفيداً وآمناً لكل لاعب. شكراً لكونكم جزءاً من المجتمع.)">
+              A note from ABOSAUD
+            </button>
+          </div>
+          <div class="feature-actions" id="featureActions" aria-label="Timn shortcuts">
+            <button class="feature-button" type="button" data-action="copy-invite" data-message-en="(Invite copied. Open Discord and paste it to join Timn.)" data-message-ar="(تم نسخ الدعوة. افتح Discord والصقها للانضمام إلى Timn.)" data-error-en="(Copying was not available here. Please use the Discord invite link above.)" data-error-ar="(النسخ غير متاح هنا. يرجى استخدام رابط دعوة Discord الموجود بالأعلى.)">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M8 8h11v11H8zM5 16H4V5a1 1 0 0 1 1-1h11v1"/>
+              </svg>
+              <span data-i18n="copyInvite">Copy Invite</span>
+            </button>
+            <button class="feature-button" type="button" data-message-en="(Meet the Timn management team: people who keep the community welcoming, safe, and ready for the next game.)" data-message-ar="(تعرّف على فريق إدارة Timn: أشخاص يحافظون على ترحيب المجتمع وأمانه واستعداده للعبة القادمة.)">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="9" cy="8" r="3"/>
+                <circle cx="17" cy="10" r="2.2"/>
+                <path d="M3.5 19c.6-3 2.4-4.5 5.5-4.5s4.9 1.5 5.5 4.5M14.5 15c2.8-.6 5 .7 5.8 3.5"/>
+              </svg>
+              <span data-i18n="meetTeam">Meet the Team</span>
+            </button>
+            <button class="feature-button" type="button" data-message-en="(Timn is a game hub for players, builders, explorers, and friends across many different games.)" data-message-ar="(Timn هو مركز ألعاب للاعبين والبنّائين والمستكشفين والأصدقاء في ألعاب مختلفة.)">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="m3 18 5.5-7 3.2 3.7 3.2-5 6.1 8.3"/>
+                <path d="M4 20h16"/>
+              </svg>
+              <span data-i18n="gameHub">Game Hub</span>
+            </button>
+          </div>
+          <div class="message-panel" id="messagePanel" role="status" aria-live="polite">
+            <button class="message-close" id="messageClose" type="button" aria-label="Close message">x</button>
+            <span id="messageText"></span>
+          </div>
+        </div>
+
+        <div class="cascade-grid" id="cascadeGrid" aria-label="Our management values">
+          <article class="layer-card">
+            <span class="layer-number" data-i18n="layerCare">01 / CARE</span>
+            <div>
+              <h3 data-i18n="careTitle">People come first.</h3>
+              <p data-i18n="careCopy">We listen closely, respond with respect, and make room for every voice.</p>
+            </div>
+          </article>
+          <article class="layer-card">
+            <span class="layer-number" data-i18n="layerOrder">02 / ORDER</span>
+            <div>
+              <h3 data-i18n="orderTitle">Clear, calm, considered.</h3>
+              <p data-i18n="orderCopy">Simple guidance helps the community stay comfortable and easy to navigate.</p>
+            </div>
+          </article>
+          <article class="layer-card">
+            <span class="layer-number" data-i18n="layerTrust">03 / TRUST</span>
+            <div>
+              <h3 data-i18n="trustTitle">Safe to be yourself.</h3>
+              <p data-i18n="trustCopy">We protect the tone of the space so connection can happen naturally.</p>
+            </div>
+          </article>
+          <article class="layer-card">
+            <span class="layer-number" data-i18n="layerTogether">04 / TOGETHER</span>
+            <div>
+              <h3 data-i18n="togetherTitle">Better as one.</h3>
+              <p data-i18n="togetherCopy">A harmonious community is something we build together, day by day.</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="info-strip reveal" id="infoStrip" aria-label="Timn details">
+        <div class="info-item">
+          <span class="info-label" data-i18n="infoAccess">Access</span>
+          <span class="info-value" data-i18n="infoAccessValue">Open invitation</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label" data-i18n="infoWhere">Where</span>
+          <span class="info-value" data-i18n="infoWhereValue">Discord community</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label" data-i18n="infoNext">Next move</span>
+          <span class="info-value" data-i18n="infoNextValue">Join the conversation</span>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <span class="footer-brand">Timn</span>
+      <span data-i18n="footerCopy">Built for the people who show up.</span>
+      <a class="footer-invite" href="https://discord.gg/Ejh2j6AvP" target="_blank" rel="noopener noreferrer">discord.gg/Ejh2j6AvP</a>
+    </footer>
+  </div>
+
+  <aside class="ai-chat" id="aiChat" aria-labelledby="aiChatTitle" aria-hidden="true" dir="rtl">
+    <div class="ai-chat-header">
+      <div class="ai-chat-title">
+        <span class="ai-online-dot" aria-hidden="true"></span>
+        <div class="ai-title-copy">
+          <span id="aiChatTitle">Timn AI</span>
+          <span class="ai-counter" id="aiCounter">تمت الإجابة على 0 سؤال</span>
+        </div>
+      </div>
+      <button class="ai-back" id="aiClose" type="button" aria-label="Back to the main website">[BACK]</button>
+    </div>
+    <div class="ai-chat-body" id="aiMessages">
+      <div class="ai-welcome" id="aiWelcome">
+        أهلا بك. اسألني عن الألعاب والمابات والأكواد ومجتمع Timn، وسأحاول مساعدتك.
+      </div>
+      <div class="ai-quick-actions" id="aiQuickActions" aria-label="أسئلة سريعة">
+        <button class="ai-quick-button" type="button" data-ai-quick="مابات روبلكس">مابات روبلكس</button>
+        <button class="ai-quick-button" type="button" data-ai-quick="اكواد">أكواد</button>
+        <button class="ai-quick-button" type="button" data-ai-quick="ربح">ربح</button>
+        <button class="ai-quick-button" type="button" data-ai-quick="رعب">رعب</button>
+        <button class="ai-quick-button" type="button" data-ai-quick="مساعدة">مساعدة</button>
+      </div>
+      <div class="ai-searching" id="aiSearching" hidden>
+        <span class="ai-spinner" aria-hidden="true"></span>
+        <span>Searching...</span>
+      </div>
+    </div>
+    <form class="ai-input-area" id="aiForm">
+      <textarea class="ai-input" id="aiInput" rows="1" dir="rtl" placeholder="اكتب سؤالك هنا..." autocomplete="off"></textarea>
+      <button class="ai-send" id="aiSend" type="submit">إرسال</button>
+    </form>
+  </aside>
+
+  <script>
+    (function () {
+      "use strict";
+      document.body.classList.add("has-motion");
+
+      var translations = {
+        en: {
+          designerPrefix: "Made by ",
+          status: "TIMN COMMUNITY ONLINE",
+          explore: "Explore",
+          eyebrow: "Welcome to Timn",
+          heroCopyStart: "A place for ",
+          heroCopyStrong: "every game, every player,",
+          heroCopyEnd: " and a community that keeps the next adventure close.",
+          joinServer: "Join the server",
+          exploreSpace: "Explore the space",
+          copyInvite: "Copy Invite",
+          meetTeam: "Meet the Team",
+          gameHub: "Game Hub",
+          cardTitle: "Find your next game.",
+          cardCopy: "Meet players, share ideas, and make yourself at home in Timn.",
+          managementKicker: "About the management",
+          managementTitle: "A space with purpose.",
+          managementIntro: "Behind Timn is a team that believes a great gaming community should feel welcoming, thoughtful, and easy to return to. Every detail is shaped to keep the atmosphere balanced and every player respected.",
+          managementQuote: "(We strive to serve and protect you and create a wonderful and harmonious environment)",
+          aboutServer: "About the server",
+          aboutCreator: "A note from ABOSAUD",
+          layerCare: "01 / CARE",
+          careTitle: "People come first.",
+          careCopy: "We listen closely, respond with respect, and make room for every player.",
+          layerOrder: "02 / ORDER",
+          orderTitle: "Clear, calm, considered.",
+          orderCopy: "Simple guidance keeps the community comfortable and easy to navigate.",
+          layerTrust: "03 / TRUST",
+          trustTitle: "Safe to be yourself.",
+          trustCopy: "We protect the tone of the space so connection can happen naturally.",
+          layerTogether: "04 / TOGETHER",
+          togetherTitle: "Better as one.",
+          togetherCopy: "A strong gaming community is something we build together, day by day.",
+          infoAccess: "Access",
+          infoAccessValue: "Open invitation",
+          infoWhere: "Where",
+          infoWhereValue: "Timn Community",
+          infoNext: "Next move",
+          infoNextValue: "Join the conversation",
+          footerCopy: "Built for the players who show up."
+        },
+        ar: {
+          designerPrefix: "Made by ",
+          status: "مجتمع Timn متصل",
+          explore: "استكشف",
+          eyebrow: "أهلاً بك في Timn",
+          heroCopyStart: "مكان يجمع ",
+          heroCopyStrong: "كل لعبة وكل لاعب،",
+          heroCopyEnd: " ومجتمعاً يجعل مغامرتك القادمة أقرب.",
+          joinServer: "انضم إلى السيرفر",
+          exploreSpace: "استكشف المساحة",
+          copyInvite: "نسخ الدعوة",
+          meetTeam: "تعرّف على الفريق",
+          gameHub: "مركز الألعاب",
+          cardTitle: "اكتشف لعبتك القادمة.",
+          cardCopy: "تعرّف على اللاعبين وشارك أفكارك واجعل نفسك في بيتك داخل Timn.",
+          managementKicker: "عن الإدارة",
+          managementTitle: "مساحة لها هدف.",
+          managementIntro: "خلف Timn فريق يؤمن بأن مجتمع الألعاب الرائع يجب أن يكون مرحباً ومتوازناً وسهل العودة إليه. كل تفصيل صُمم للحفاظ على أجواء مريحة واحترام كل لاعب.",
+          managementQuote: "(نسعى لخدمتكم وحمايتكم وخلق بيئة رائعة ومتناسقة)",
+          aboutServer: "عن السيرفر",
+          aboutCreator: "رسالة من ABOSAUD",
+          layerCare: "01 / اهتمام",
+          careTitle: "الناس أولاً.",
+          careCopy: "نستمع باهتمام ونرد باحترام ونمنح كل لاعب مساحة.",
+          layerOrder: "02 / نظام",
+          orderTitle: "وضوح وهدوء وتوازن.",
+          orderCopy: "إرشادات بسيطة تجعل المجتمع مريحاً وسهل التصفح.",
+          layerTrust: "03 / ثقة",
+          trustTitle: "كن على طبيعتك بأمان.",
+          trustCopy: "نحافظ على أجواء المكان لتنشأ الروابط بشكل طبيعي.",
+          layerTogether: "04 / معاً",
+          togetherTitle: "نصبح أفضل معاً.",
+          togetherCopy: "مجتمع الألعاب القوي نبنيه معاً، يوماً بعد يوم.",
+          infoAccess: "الوصول",
+          infoAccessValue: "دعوة مفتوحة",
+          infoWhere: "المكان",
+          infoWhereValue: "مجتمع Timn",
+          infoNext: "خطوتك التالية",
+          infoNextValue: "انضم إلى الحوار",
+          footerCopy: "صُنع للاعبين الذين يحضرون."
+        }
+      };
+
+      var currentLanguage = "en";
+      var translateButton = document.getElementById("translateButton");
+      var messageButtons = document.querySelectorAll("[data-message-en]");
+      var messagePanel = document.getElementById("messagePanel");
+      var messageText = document.getElementById("messageText");
+      var messageClose = document.getElementById("messageClose");
+      var messageActions = document.getElementById("messageActions");
+      var featureActions = document.getElementById("featureActions");
+      var cascadeGrid = document.getElementById("cascadeGrid");
+      var infoStrip = document.getElementById("infoStrip");
+      var pageDescription = document.getElementById("pageDescription");
+      var scrollProgress = document.getElementById("scrollProgress");
+      var revealElements = document.querySelectorAll(".reveal");
+      var activeMessageButton = null;
+      var aiLaunchButton = document.getElementById("aiLaunchButton");
+      var aiChat = document.getElementById("aiChat");
+      var aiClose = document.getElementById("aiClose");
+      var aiForm = document.getElementById("aiForm");
+      var aiInput = document.getElementById("aiInput");
+      var aiSend = document.getElementById("aiSend");
+      var aiMessages = document.getElementById("aiMessages");
+      var aiWelcome = document.getElementById("aiWelcome");
+      var aiSearching = document.getElementById("aiSearching");
+      var aiCounter = document.getElementById("aiCounter");
+      var aiQuickActions = document.getElementById("aiQuickActions");
+      var isAiThinking = false;
+      var aiSearchTimer = null;
+      var aiTypeTimer = null;
+      var discordInviteUrl = "https://discord.gg/Ejh2j6AvP";
+      var firebaseConfig = {
+        apiKey: "AIzaSyC_s-DH8xld308TONXh-67werbnBRZ4LeY",
+        authDomain: "timn-abosaud.firebaseapp.com",
+        databaseURL: "https://timn-abosaud-default-rtdb.firebaseio.com",
+        projectId: "timn-abosaud",
+        storageBucket: "timn-abosaud.firebasestorage.app",
+        messagingSenderId: "1009473838758",
+        appId: "1:1009473838758:web:da44d37d3cfabdc9ef9e67",
+        measurementId: "G-FKN3TM31JJ"
+      };
+      var firebaseDatabase = null;
+      var firebaseOperationTimeout = 4000;
+      var guessActive = false;
+      var adminCode = "abosaud226677BBabosaud";
+      var answerCount = Number(readStoredValue("timn_ai_answer_count", "0")) || 0;
+      var unknownQuestions = [];
+
+      function readStoredValue(key, fallback) {
+        try {
+          var value = window.localStorage.getItem(key);
+          return value === null ? fallback : value;
+        } catch (error) {
+          return fallback;
+        }
+      }
+
+      function writeStoredValue(key, value) {
+        try {
+          window.localStorage.setItem(key, value);
+        } catch (error) {
+          return false;
+        }
+        return true;
+      }
+
+      function readLocalUnknownQuestions() {
+        try {
+          var stored = window.localStorage.getItem("timn_ai_unknown_questions");
+          var parsed = stored ? JSON.parse(stored) : [];
+          if (!Array.isArray(parsed)) {
+            return [];
+          }
+
+          return parsed.map(function (entry) {
+            if (typeof entry === "string") {
+              return { question: entry, timestamp: 0 };
+            }
+
+            if (entry && typeof entry.question === "string") {
+              return {
+                question: entry.question,
+                timestamp: Number(entry.timestamp) || 0
+              };
+            }
+
+            return null;
+          }).filter(function (entry) {
+            return entry && entry.question.trim();
+          });
+        } catch (error) {
+          return [];
+        }
+      }
+
+      function saveLocalUnknownQuestion(question) {
+        var normalized = normalizeAiText(question);
+        var alreadySaved = unknownQuestions.some(function (savedQuestion) {
+          return normalizeAiText(savedQuestion.question) === normalized;
+        });
+
+        if (!alreadySaved && normalized) {
+          unknownQuestions.push({ question: question, timestamp: Date.now() });
+          writeStoredValue("timn_ai_unknown_questions", JSON.stringify(unknownQuestions));
+        }
+      }
+
+      function initializeFirebase() {
+        try {
+          if (!window.firebase || typeof window.firebase.initializeApp !== "function" || typeof window.firebase.database !== "function") {
+            return;
+          }
+
+          var firebaseApp = window.firebase.apps.length ? window.firebase.app() : window.firebase.initializeApp(firebaseConfig);
+          firebaseDatabase = window.firebase.database(firebaseApp);
+        } catch (error) {
+          firebaseDatabase = null;
+       }
+      }
+
+      function withFirebaseTimeout(firebasePromise) {
+        return new Promise(function (resolve, reject) {
+          var completed = false;
+          var timeoutId = window.setTimeout(function () {
+            if (!completed) {
+              completed = true;
+              reject(new Error("Firebase operation timed out"));
+            }
+          }, firebaseOperationTimeout);
+
+          Promise.resolve(firebasePromise).then(function (value) {
+            if (!completed) {
+              completed = true;
+              window.clearTimeout(timeoutId);
+              resolve(value);
+            }
+          }).catch(function (error) {
+            if (!completed) {
+              completed = true;
+              window.clearTimeout(timeoutId);
+              reject(error);
+            }
+          });
+        });
+      }
+
+      function saveUnknownQuestion(question) {
+         var normalized = normalizeAiText(question);
+         if (!normalized) {
+           return Promise.resolve();
+         }
+
+         var record = {
+           question: question,
+           timestamp: Date.now()
+         };
+
+        if (!firebaseDatabase) {
+          saveLocalUnknownQuestion(question);
+          return Promise.resolve();
+        }
+
+         try {
+          return withFirebaseTimeout(firebaseDatabase.ref("unknown_questions").push(record)).then(function () {
+             unknownQuestions.push(record);
+             writeStoredValue("timn_ai_unknown_questions", JSON.stringify(unknownQuestions));
+           }).catch(function () {
+             saveLocalUnknownQuestion(question);
+           });
+         } catch (error) {
+           saveLocalUnknownQuestion(question);
+           return Promise.resolve();
+         }
+       }
+
+      function readUnknownQuestionsFromFirebase() {
+         var localQuestions = readLocalUnknownQuestions();
+         if (!firebaseDatabase) {
+           unknownQuestions = localQuestions;
+           return Promise.resolve(unknownQuestions);
+         }
+
+        try {
+          return withFirebaseTimeout(firebaseDatabase.ref("unknown_questions").once("value")).then(function (snapshot) {
+             var data = snapshot.val() || {};
+             var questions = Object.keys(data).map(function (key) {
+               var entry = data[key];
+               if (!entry || typeof entry.question !== "string" || !entry.question.trim()) {
+                 return null;
+               }
+
+               return {
+                 question: entry.question,
+                 timestamp: Number(entry.timestamp) || 0
+               };
+             }).filter(function (entry) {
+               return entry;
+             }).sort(function (first, second) {
+               return second.timestamp - first.timestamp;
+             });
+
+             unknownQuestions = questions;
+             writeStoredValue("timn_ai_unknown_questions", JSON.stringify(questions));
+             return questions;
+           }).catch(function () {
+             unknownQuestions = localQuestions;
+             return localQuestions;
+           });
+        } catch (error) {
+          unknownQuestions = localQuestions;
+          return Promise.resolve(localQuestions);
+         }
+       }
+
+      function updateAiCounter() {
+        aiCounter.textContent = "تمت الإجابة على " + answerCount + " سؤال";
+        writeStoredValue("timn_ai_answer_count", String(answerCount));
+      }
+
+      function countAiAnswer() {
+        answerCount += 1;
+        updateAiCounter();
+      }
+
+      var aiKnowledge = {
+        about: {
+          terms: ["من انت", "من أنت", "عرف بنفسك", "انت مين", "وش انت"],
+          reply: "أهلا انا نظام Timn AI ذكاء اصطناعي تم تطويري من قبل شخص اسمه ABOSAUD وفريق Timn. انا هنا للمساعدة في أي شي. اكتب سؤالك وراح اجاوبك عليه بدقة كاملة."
+        },
+        thanks: {
+          terms: ["شكرا", "شكرا لك", "شكراً", "مشكور"],
+          reply: "العفو بالخدمة دائما"
+        },
+        join: {
+          terms: ["كيف ادخل السيرفر", "كيف ادخل سيرفر", "ادخل السيرفر", "طريقة دخول السيرفر", "دخول السيرفر"],
+          reply: "ادخل تطبيق ديسكورد وروح سيرفر Timn من هنا: https://discord.gg/Ejh2j6AvP ثم روح روم دخول السيرفر راح تلقى كلمة المرور. بالتوفيق لك ونتمنى لك لعب جميل ومغامرات مذهلة."
+        },
+        profit: {
+          terms: ["وش أفضل مابات ربح", "مابات ربح", "مابات فلوس", "ربح", "فلوس"],
+          reply: "أفضل مابات الربح في روبلكس:\n- Blox Fruit (تداول الفواكه)\n- King Legacy (بيع السيف)\n- Pet Simulator 99 (تداول الحيوانات)\n- Fisch (بيع الأسماك النادرة)\n- Bed Wars (بطولات وجوائز)"
+        },
+        codes: {
+          terms: ["ابي اكواد", "اكواد روبلكس", "علمني اكواد", "اكواد"],
+          reply: "أشهر الأكواد في روبلكس:\n- 1BVISITS (قبعة مجانية)\n- TARGETED (أغراض مجانية)\n- FREE (أشياء مجانية)\n- SPIDERCOLA (مشروب مجاني)\n- ROBLOXEDU2024 (أغراض تعليمية)\n\nملاحظة: الأكواد تتغير باستمرار. اكتب اسم اللعبة وأنا أعطيك أكوادها الحالية."
+        },
+        completion: {
+          terms: ["وش ألعاب تختيم", "تختيم", "العاب قصه", "ألعاب مغامرات"],
+          reply: "أفضل ألعاب التختيم في روبلكس:\n- Doors (رعب وتختيم)\n- Dead Rails (نجاة)\n- A Universal Time (قصة)\n- Anime Adventures (دفاع وتختيم)\n- Dungeon Quest (مغامرات)"
+        },
+        pvp: {
+          terms: ["وش مابات pvp", "pvp", "مابات قتال جماعي", "قتال"],
+          reply: "أفضل مابات PvP في روبلكس:\n- Blox Fruits (قتال ون بيس)\n- Arsenal (تصويب)\n- Bed Wars (فرق)\n- The Strongest Battlegrounds (قتال ون بيس)\n- Murder Mystery 2 (غموض وقتال)"
+        },
+        mobile: {
+          terms: ["وش أخف مابات للجوال", "مابات خفيفه", "العاب خفيفه", "جوال"],
+          reply: "أخف المابات على الجوال:\n- Doors (خفيف وسريع)\n- Fisch (خفيف جداً)\n- Blade Ball (خفيف وممتع)\n- Muscle Legends (خفيف)\n- Speed Run 4 (خفيف جداً)"
+        },
+        favorite: {
+          terms: ["وش لعبتك المفضلة", "لعبتك المفضلة", "وش تحب تلعب"],
+          reply: "أنا AI ما ألعب، بس لو ألعب بختار Blox Fruit لأنها مليانة مغامرات!"
+        },
+        online: {
+          terms: ["متى تكون اونلاين", "متى تفتح", "وقتك", "متى ترد"],
+          reply: "أنا متواجد 24 ساعة، كل يوم! ما أنام ولا أتعب. اسألني أي وقت."
+        },
+        meaning: {
+          terms: ["وش معنى timn", "ليش اسم timn", "وش أصل الاسم", "وش معنى اسم السيرفر"],
+          reply: "Timn هو اسم السيرفر الرسمي. أسسه ABOSAUD عشان يجمع اللاعبين في مجتمع واحد."
+        },
+        nationality: {
+          terms: ["من أي دولة انت", "جنسيتك", "وين ساكن", "انت من وين"],
+          reply: "أنا سعودي! صمموني فريق Timn في السعودية. فخور بأصلي."
+        },
+        help: {
+          terms: ["ساعدني", "ابي مساعدة", "مساعدة", "وش تسوي"],
+          reply: "أكيد! اسألني عن المابات، الأكواد، الربح، أو أي شي. أنا هنا عشانك."
+        },
+        updates: {
+          terms: ["وش جديد روبلكس", "تحديثات روبلكس", "جديد روبلكس", "اخر تحديث روبلكس"],
+          reply: "روبلكس ينزل تحديثات بشكل مستمر. اكتب اسم اللعبة وأنا أعطيك آخر أخبارها. أشهر التحديثات دايم تكون في Blox Fruit و Doors و Pet Simulator."
+        },
+        anime: {
+          terms: ["ألعاب انمي", "مابات انمي", "العاب انمي", "مابات انمي روبلكس"],
+          reply: "أفضل مابات الأنمي في روبلكس:\n- Blox Fruits (ون بيس)\n- King Legacy (ون بيس)\n- Anime Adventures (أنمي متنوع)\n- A Universal Time (جوجو)\n- The Strongest Battlegrounds (ون بيس)"
+        },
+        cars: {
+          terms: ["ألعاب سيارات", "مابات سيارات", "العاب سيارات"],
+          reply: "أفضل مابات السيارات:\n- Vehicle Legends (سباقات)\n- Driving Empire (قيادة حرة)\n- Car Crushers 2 (تدمير)\n- Greenville (حياة واقعية)"
+        },
+        sports: {
+          terms: ["ألعاب رياضه", "مابات رياضه", "العاب كورة", "العاب رياضة"],
+          reply: "أفضل مابات الرياضة:\n- Basketball Legends (سلة)\n- Super Striker League (كرة قدم)\n- Football Fusion (كرة قدم أمريكية)\n- Boxing Simulator (ملاكمة)"
+        },
+        simulation: {
+          terms: ["ألعاب محاكاة", "سيموليشن", "العاب واقعية", "مابات سيموليشن"],
+          reply: "أفضل مابات المحاكاة:\n- Bloxburg (حياة يومية)\n- Adopt Me (تربية حيوانات)\n- Brookhaven (حياة اجتماعية)\n- Theme Park Tycoon 2 (إدارة مدينة ملاهي)"
+        },
+        horror: {
+          terms: ["أفضل رعب", "مابات رعب", "العاب رعب", "وش أفضل لعبة رعب", "رعب"],
+          reply: "أقوى مابات الرعب:\n- Doors (رعب نفسي)\n- Dead Rails (نجاة من الزومبي)\n- The Mimic (رعب ياباني)\n- Apeirophobia (رعب كوني)"
+        },
+        freeRobux: {
+          terms: ["روبوكس مجاني", "كيف اربح روبوكس", "روبوكس ببلاش", "روبوكس مجانا"],
+          reply: "أفضل طرق روبوكس مجاني:\n- Microsoft Rewards (نقاط تتحول لروبوكس)\n- المشاركة في إيفنتات روبلكس\n- بيع الأغراض في الألعاب\n- تطبيقات هدايا (Amazon أحياناً تسوي عروض)\nملاحظة: انتبه من المواقع النصابة اللي تدعي تعطي روبوكس مجاني."
+        },
+        jokes: {
+          terms: ["قل لي نكتة", "نكتة", "اضحكني"],
+          replies: ["ليش الكمبيوتر بارد؟ لأن عنده Windows!", "ليش ما يلعب الجوال كوره؟ لأن ما يقدر يمسك الكوره!", "مرة قيمر راح للنادي قالوا له كم وزنك قال: 60 FPS!"]
+        },
+        opinion: {
+          terms: ["وش رايك فيا", "كيف تشوفني", "وش رأيك فيني"],
+          reply: "أشوفك لاعب أسطوري! دامك تسأل Timn AI يعني ذوقك رهيب!"
+        },
+        challenge: {
+          terms: ["تحديات", "تحدي اليوم", "مهمة اليوم", "وش التحدي"],
+          reply: "تحدي اليوم: العب Doors وحاول توصل لباب 50 بدون ما تموت! إذا خلصته تعال قولي وأعطيك تحدي جديد."
+        },
+        maps: {
+          terms: ["ابي مابات", "مابات روبلكس", "وش المابات", "مابات", "العاب"],
+          reply: "تفضل المابات:\n\nمابات قتال:\n- War Simulator\n- TTK Testing\n- Decey (New Gun)\n\nمابات ون بيس:\n- Blox Fruit\n- Haze Seas\n- King Legacy\n- Devil Fruit Arena\n- Grand Blue\n\nمابات رعب:\n- West Wood Remark (Beta)\n- Doors\n- Dead Rails"
+        },
+        unknown: "المعذرة سؤالك ماهو موجود في نظام الرد الآلي. ادخل تطبيق ديسكورد ومنشن شخص اسمه ABOSAUD واكتب سؤالك عنده وهو راح يضيف سؤالك في نظامي البرمجي."
+      };
+
+      function normalizeAiText(value) {
+        return String(value || "")
+          .toLowerCase()
+          .replace(/[أإآ]/g, "ا")
+          .replace(/ى/g, "ي")
+          .replace(/ة/g, "ه")
+          .replace(/ؤ/g, "و")
+          .replace(/ئ/g, "ي")
+          .replace(/[\u064B-\u065F\u0670ـ]/g, "")
+          .replace(/[^\u0600-\u06FFa-z0-9\s]/g, " ")
+          .replace(/\s+/g, " ")
+          .trim();
+      }
+
+      function hasAiTerm(question, terms) {
+        var normalizedQuestion = normalizeAiText(question);
+        return terms.some(function (term) {
+          return normalizedQuestion.includes(normalizeAiText(term));
+        });
+      }
+
+      function isGuessPrompt(question) {
+        return hasAiTerm(question, ["خمن", "خمن اللعبة", "لعبة الغاز", "الغاز"]);
+      }
+
+      function isGuessCorrect(question) {
+        return hasAiTerm(question, ["doors", "دورز", "blox fruit", "blox fruits", "بلوك فروت", "pet simulator", "pet simulator 99", "بت سيموليتر"]);
+      }
+
+      function getAdminReply() {
+        return readUnknownQuestionsFromFirebase().then(function (questions) {
+          if (!questions.length) {
+            return "لوحة ABOSAUD السرية\nلا توجد أسئلة مجهولة محفوظة حتى الآن.";
+          }
+
+          return "لوحة ABOSAUD السرية\nعدد الأسئلة المجهولة: " + questions.length + "\n\n" + questions.map(function (entry, index) {
+            return (index + 1) + ": " + entry.question;
+          }).join("\n");
+        });
+      }
+
+      function clearUnknownQuestions() {
+        unknownQuestions = [];
+        writeStoredValue("timn_ai_unknown_questions", "[]");
+        if (!firebaseDatabase) {
+          return Promise.resolve("تم تصفير قائمة الأسئلة المجهولة");
+        }
+
+        try {
+          return withFirebaseTimeout(firebaseDatabase.ref("unknown_questions").remove()).then(function () {
+            return "تم تصفير قائمة الأسئلة المجهولة";
+          }).catch(function () {
+            return "تم تصفير قائمة الأسئلة المجهولة";
+          });
+        } catch (error) {
+          return Promise.resolve("تم تصفير قائمة الأسئلة المجهولة");
+        }
+      }
+
+      function findAiResponse(question) {
+        var normalizedQuestion = normalizeAiText(question);
+
+        if (normalizedQuestion === normalizeAiText("clear " + adminCode)) {
+          return clearUnknownQuestions().then(function (reply) {
+            return { reply: reply, admin: true, unknown: false };
+          });
+        }
+
+        if (normalizedQuestion.includes(normalizeAiText(adminCode))) {
+          return getAdminReply().then(function (reply) {
+            return { reply: reply, admin: true, unknown: false };
+          });
+        }
+
+        if (isGuessPrompt(question)) {
+          guessActive = true;
+          return {
+            reply: "يلا نلعب! خمن اللعبة:\n1. لعبة فيها أبواب مرعبة وتحاول تنجو (تبدأ بـ D)\n2. لعبة فواكه وقوى خارقة (كلمتين)\n3. لعبة حيوانات تربيها وتجمعها (كلمتين)\n\nاكتب إجابتك وأنا بقول لك إذا صح!",
+            unknown: false
+          };
+        }
+
+        if (guessActive) {
+          guessActive = false;
+          return {
+            reply: isGuessCorrect(question) ? "صح! أنت لاعب محترف!" : "غلط! حاول مرة ثانية.",
+            unknown: false
+          };
+        }
+
+        var categories = [
+          aiKnowledge.about,
+          aiKnowledge.thanks,
+          aiKnowledge.join,
+          aiKnowledge.profit,
+          aiKnowledge.codes,
+          aiKnowledge.completion,
+          aiKnowledge.pvp,
+          aiKnowledge.mobile,
+          aiKnowledge.favorite,
+          aiKnowledge.online,
+          aiKnowledge.meaning,
+          aiKnowledge.nationality,
+          aiKnowledge.help,
+          aiKnowledge.updates,
+          aiKnowledge.anime,
+          aiKnowledge.cars,
+          aiKnowledge.sports,
+          aiKnowledge.simulation,
+          aiKnowledge.horror,
+          aiKnowledge.freeRobux,
+          aiKnowledge.jokes,
+          aiKnowledge.opinion,
+          aiKnowledge.challenge,
+          aiKnowledge.maps
+        ];
+
+        for (var categoryIndex = 0; categoryIndex < categories.length; categoryIndex += 1) {
+          var category = categories[categoryIndex];
+          if (hasAiTerm(question, category.terms)) {
+            if (category.replies) {
+              return { reply: category.replies[Math.floor(Math.random() * category.replies.length)], unknown: false };
+            }
+            return { reply: category.reply, unknown: false };
+          }
+        }
+
+        return { reply: aiKnowledge.unknown, unknown: true };
+      }
+
+      function scrollAiMessages() {
+        aiMessages.scrollTop = aiMessages.scrollHeight;
+      }
+
+      function syncAiViewport() {
+        var viewportHeight = window.innerHeight;
+        var viewportOffsetTop = 0;
+
+        if (window.visualViewport) {
+          viewportHeight = window.visualViewport.height;
+          viewportOffsetTop = window.visualViewport.offsetTop;
+        }
+
+        document.documentElement.style.setProperty("--ai-viewport-height", Math.max(1, viewportHeight) + "px");
+        document.documentElement.style.setProperty("--ai-viewport-offset-top", Math.max(0, viewportOffsetTop) + "px");
+
+        if (aiChat.classList.contains("is-open")) {
+          window.requestAnimationFrame(scrollAiMessages);
+        }
+      }
+
+      function addAiUserMessage(question) {
+        var userMessage = document.createElement("div");
+        userMessage.className = "ai-user-message";
+        userMessage.dir = "rtl";
+        userMessage.textContent = question;
+        aiMessages.insertBefore(userMessage, aiSearching);
+        scrollAiMessages();
+      }
+
+      function finishAiThinking() {
+        isAiThinking = false;
+        aiInput.disabled = false;
+        aiSend.disabled = false;
+        aiInput.focus();
+      }
+
+      function linkifyDiscordInvite(element) {
+        var text = element.textContent;
+        var inviteIndex = text.indexOf(discordInviteUrl);
+        if (inviteIndex === -1) {
+          return;
+        }
+
+        var beforeInvite = text.slice(0, inviteIndex);
+        var afterInvite = text.slice(inviteIndex + discordInviteUrl.length);
+        var inviteLink = document.createElement("a");
+        inviteLink.href = discordInviteUrl;
+        inviteLink.target = "_blank";
+        inviteLink.rel = "noopener noreferrer";
+        inviteLink.textContent = discordInviteUrl;
+        element.textContent = "";
+
+        if (beforeInvite) {
+          element.appendChild(document.createTextNode(beforeInvite));
+        }
+        element.appendChild(inviteLink);
+        if (afterInvite) {
+          element.appendChild(document.createTextNode(afterInvite));
+        }
+      }
+
+      function addAiBotMessage(reply) {
+        var botMessage = document.createElement("div");
+        var botName = document.createElement("span");
+        var botReply = document.createElement("div");
+        var replyCharacters = Array.from(reply);
+        var characterIndex = 0;
+
+        countAiAnswer();
+        botMessage.className = "ai-bot-message";
+        botName.className = "ai-bot-name";
+        botName.textContent = "Timn AI";
+        botReply.className = "ai-bot-reply";
+        botReply.textContent = "";
+        botMessage.appendChild(botName);
+        botMessage.appendChild(botReply);
+        aiMessages.insertBefore(botMessage, aiSearching);
+        scrollAiMessages();
+
+        aiTypeTimer = window.setInterval(function () {
+          botReply.textContent += replyCharacters[characterIndex];
+          characterIndex += 1;
+          scrollAiMessages();
+
+          if (characterIndex >= replyCharacters.length) {
+            window.clearInterval(aiTypeTimer);
+            aiTypeTimer = null;
+            linkifyDiscordInvite(botReply);
+            finishAiThinking();
+          }
+        }, 14);
+      }
+
+      function addAiAdminPanel(reply) {
+        var botMessage = document.createElement("div");
+        var botName = document.createElement("span");
+        var panel = document.createElement("div");
+
+        countAiAnswer();
+        botMessage.className = "ai-bot-message";
+        botName.className = "ai-bot-name";
+        botName.textContent = "Timn AI";
+        panel.className = "ai-admin-panel";
+        panel.textContent = reply;
+        botMessage.appendChild(botName);
+        botMessage.appendChild(panel);
+        aiMessages.insertBefore(botMessage, aiSearching);
+        scrollAiMessages();
+        finishAiThinking();
+      }
+
+      function submitAiQuestion() {
+        var question = aiInput.value.trim();
+        if (!question || isAiThinking) {
+          return;
+        }
+
+        isAiThinking = true;
+        aiInput.disabled = true;
+        aiSend.disabled = true;
+        aiWelcome.hidden = true;
+        addAiUserMessage(question);
+        aiInput.value = "";
+        aiSearching.hidden = false;
+        scrollAiMessages();
+
+        aiSearchTimer = window.setTimeout(function () {
+          Promise.resolve(findAiResponse(question)).then(function (response) {
+            var savePromise = response.unknown ? saveUnknownQuestion(question) : Promise.resolve();
+            return savePromise.then(function () {
+              aiSearching.hidden = true;
+              if (response.admin) {
+                addAiAdminPanel(response.reply);
+              } else {
+                addAiBotMessage(response.reply);
+              }
+            });
+          }).catch(function () {
+            aiSearching.hidden = true;
+            saveLocalUnknownQuestion(question);
+            addAiBotMessage(aiKnowledge.unknown);
+          });
+        }, 2000);
+      }
+
+      function openAiChat() {
+        document.documentElement.classList.add("chat-open");
+        document.body.classList.add("chat-open");
+        aiChat.classList.add("is-open");
+        aiChat.setAttribute("aria-hidden", "false");
+        syncAiViewport();
+        window.setTimeout(function () {
+          try {
+            aiInput.focus({ preventScroll: true });
+          } catch (error) {
+            aiInput.focus();
+          }
+          syncAiViewport();
+          scrollAiMessages();
+        }, 40);
+      }
+
+      function closeAiChat() {
+        aiChat.classList.remove("is-open");
+        aiChat.setAttribute("aria-hidden", "true");
+        document.documentElement.classList.remove("chat-open");
+        document.body.classList.remove("chat-open");
+        window.setTimeout(function () {
+          aiLaunchButton.focus();
+        }, 0);
+      }
+
+      aiLaunchButton.addEventListener("click", function () {
+        if (aiChat.classList.contains("is-open")) {
+          closeAiChat();
+        } else {
+          openAiChat();
+        }
+      });
+
+      aiClose.addEventListener("click", closeAiChat);
+      aiForm.addEventListener("submit", function (event) {
+        event.preventDefault();
+        submitAiQuestion();
+      });
+
+      aiInput.addEventListener("keydown", function (event) {
+        if (event.key === "Enter" && !event.shiftKey) {
+          event.preventDefault();
+          submitAiQuestion();
+        }
+      });
+
+      window.addEventListener("resize", syncAiViewport, { passive: true });
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener("resize", syncAiViewport, { passive: true });
+        window.visualViewport.addEventListener("scroll", syncAiViewport, { passive: true });
+      }
+
+      document.querySelectorAll("[data-ai-quick]").forEach(function (button) {
+        button.addEventListener("click", function () {
+          if (!isAiThinking) {
+            aiInput.value = button.getAttribute("data-ai-quick");
+            submitAiQuestion();
+          }
+        });
+      });
+
+      function showMessage(button) {
+        activeMessageButton = button;
+        messageText.textContent = button.getAttribute("data-message-" + currentLanguage);
+        messagePanel.classList.add("is-visible");
+      }
+
+      function copyText(text) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          return navigator.clipboard.writeText(text);
+        }
+
+        var helper = document.createElement("textarea");
+        var copied = false;
+        helper.value = text;
+        helper.setAttribute("readonly", "");
+        helper.style.position = "fixed";
+        helper.style.opacity = "0";
+        document.body.appendChild(helper);
+        helper.select();
+        try {
+          copied = document.execCommand("copy");
+        } catch (error) {
+          copied = false;
+        }
+        document.body.removeChild(helper);
+        return copied ? Promise.resolve() : Promise.reject(new Error("Copy unavailable"));
+      }
+
+      messageButtons.forEach(function (button) {
+        button.addEventListener("click", function () {
+          if (button.getAttribute("data-action") === "copy-invite") {
+            var inviteLink = document.querySelector("a.button-primary").getAttribute("href");
+            copyText(inviteLink).then(function () {
+              showMessage(button);
+            }).catch(function () {
+              activeMessageButton = null;
+              messageText.textContent = button.getAttribute("data-error-" + currentLanguage);
+              messagePanel.classList.add("is-visible");
+            });
+            return;
+          }
+          showMessage(button);
+        });
+      });
+
+      messageClose.addEventListener("click", function () {
+        messagePanel.classList.remove("is-visible");
+      });
+
+      function applyLanguage(language) {
+        var languagePack = translations[language];
+        currentLanguage = language;
+        document.documentElement.lang = language === "ar" ? "ar" : "en";
+        document.documentElement.dir = language === "ar" ? "rtl" : "ltr";
+        document.title = language === "ar" ? "Timn | مجتمع الألعاب" : "Timn | Gaming Community";
+        pageDescription.setAttribute("content", language === "ar" ? "Timn - انضم إلى مجتمع الألعاب." : "Timn - Join the gaming community.");
+        writeStoredValue("timn_language", language);
+
+        document.querySelectorAll("[data-i18n]").forEach(function (element) {
+          var key = element.getAttribute("data-i18n");
+          if (languagePack[key]) {
+            element.textContent = languagePack[key];
+          }
+        });
+
+        translateButton.textContent = language === "ar" ? "English" : "Translate";
+        translateButton.setAttribute("aria-label", language === "ar" ? "العودة إلى الإنجليزية" : "Translate website");
+         aiLaunchButton.setAttribute("aria-label", language === "ar" ? "فتح مساعد Timn AI" : "Open Timn AI assistant");
+         messageClose.setAttribute("aria-label", language === "ar" ? "إغلاق الرسالة" : "Close message");
+         aiClose.setAttribute("aria-label", language === "ar" ? "العودة إلى الموقع الرئيسي" : "Back to the main website");
+        messageActions.setAttribute("aria-label", language === "ar" ? "تعرف على Timn" : "Learn more about Timn");
+        featureActions.setAttribute("aria-label", language === "ar" ? "اختصارات Timn" : "Timn shortcuts");
+        cascadeGrid.setAttribute("aria-label", language === "ar" ? "قيم إدارة Timn" : "Our management values");
+        infoStrip.setAttribute("aria-label", language === "ar" ? "تفاصيل Timn" : "Timn details");
+        aiQuickActions.setAttribute("aria-label", language === "ar" ? "أسئلة سريعة" : "Quick questions");
+
+        if (messagePanel.classList.contains("is-visible") && activeMessageButton) {
+          messageText.textContent = activeMessageButton.getAttribute("data-message-" + language);
+        }
+      }
+
+      translateButton.addEventListener("click", function () {
+        applyLanguage(currentLanguage === "en" ? "ar" : "en");
+      });
+
+      function updateScrollProgress() {
+        var scrollableHeight = document.documentElement.scrollHeight - window.innerHeight;
+        var progress = scrollableHeight > 0 ? (window.scrollY / scrollableHeight) * 100 : 0;
+        scrollProgress.style.width = Math.min(100, Math.max(0, progress)) + "%";
+      }
+
+      window.addEventListener("scroll", updateScrollProgress, { passive: true });
+      window.addEventListener("resize", updateScrollProgress);
+
+      if ("IntersectionObserver" in window) {
+        var revealObserver = new IntersectionObserver(function (entries, observer) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("is-visible");
+              observer.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.16 });
+
+        revealElements.forEach(function (element) {
+          revealObserver.observe(element);
+        });
+      } else {
+        revealElements.forEach(function (element) {
+          element.classList.add("is-visible");
+        });
+      }
+
+      initializeFirebase();
+      updateAiCounter();
+      var savedLanguage = readStoredValue("timn_language", "en");
+      applyLanguage(savedLanguage === "ar" ? "ar" : "en");
+      updateScrollProgress();
+    }());
+  </script>
+</body>
+</html>
